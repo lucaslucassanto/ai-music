@@ -459,6 +459,110 @@ textarea.form-input { resize:vertical; min-height:80px; }
   position:fixed; top:0; left:0; width:100%; height:100%;
   pointer-events:none; z-index:9999;
 }
+
+/* 9. Staggered card cascade */
+.track-grid .track-card, .genre-grid .genre-card { opacity:0; animation:cascadeIn .4s ease forwards; }
+.track-grid .track-card:nth-child(1), .genre-grid .genre-card:nth-child(1) { animation-delay:.03s; }
+.track-grid .track-card:nth-child(2), .genre-grid .genre-card:nth-child(2) { animation-delay:.06s; }
+.track-grid .track-card:nth-child(3), .genre-grid .genre-card:nth-child(3) { animation-delay:.09s; }
+.track-grid .track-card:nth-child(4), .genre-grid .genre-card:nth-child(4) { animation-delay:.12s; }
+.track-grid .track-card:nth-child(5), .genre-grid .genre-card:nth-child(5) { animation-delay:.15s; }
+.track-grid .track-card:nth-child(6), .genre-grid .genre-card:nth-child(6) { animation-delay:.18s; }
+.track-grid .track-card:nth-child(7), .genre-grid .genre-card:nth-child(7) { animation-delay:.21s; }
+.track-grid .track-card:nth-child(8), .genre-grid .genre-card:nth-child(8) { animation-delay:.24s; }
+.track-grid .track-card:nth-child(n+9), .genre-grid .genre-card:nth-child(n+9) { animation-delay:.27s; }
+.genre-grid .genre-card:nth-child(9) { animation-delay:.27s; }
+.genre-grid .genre-card:nth-child(10) { animation-delay:.30s; }
+.genre-grid .genre-card:nth-child(11) { animation-delay:.33s; }
+.genre-grid .genre-card:nth-child(12) { animation-delay:.36s; }
+.genre-grid .genre-card:nth-child(13) { animation-delay:.39s; }
+.genre-grid .genre-card:nth-child(14) { animation-delay:.42s; }
+.genre-grid .genre-card:nth-child(15) { animation-delay:.45s; }
+.genre-grid .genre-card:nth-child(16) { animation-delay:.48s; }
+@keyframes cascadeIn { from{opacity:0;transform:translateY(20px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+/* 10. Track rows stagger too */
+.track-row { opacity:0; animation:rowSlideIn .3s ease forwards; }
+.track-row:nth-child(1) { animation-delay:.02s; }
+.track-row:nth-child(2) { animation-delay:.04s; }
+.track-row:nth-child(3) { animation-delay:.06s; }
+.track-row:nth-child(4) { animation-delay:.08s; }
+.track-row:nth-child(5) { animation-delay:.10s; }
+.track-row:nth-child(6) { animation-delay:.12s; }
+.track-row:nth-child(7) { animation-delay:.14s; }
+.track-row:nth-child(8) { animation-delay:.16s; }
+.track-row:nth-child(n+9) { animation-delay:.18s; }
+@keyframes rowSlideIn { from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:translateX(0)} }
+
+/* 11. Cursor sparkle */
+.sparkle {
+  position:fixed; pointer-events:none; z-index:9998;
+  width:6px; height:6px; border-radius:50%;
+  background:var(--accent);
+  animation:sparkleFade .6s ease forwards;
+}
+@keyframes sparkleFade { 0%{transform:scale(1);opacity:.8} 100%{transform:scale(0) translateY(-20px);opacity:0} }
+
+/* 12. Ripple effect */
+.ripple-container { position:relative; overflow:hidden; }
+.ripple {
+  position:absolute; border-radius:50%;
+  background:rgba(255,255,255,.2);
+  transform:scale(0);
+  animation:rippleAnim .5s ease-out forwards;
+  pointer-events:none;
+}
+@keyframes rippleAnim { to{transform:scale(4);opacity:0} }
+
+/* 13. Pulsing glow on now-playing row */
+.track-row.playing {
+  background:var(--card);
+  animation:rowSlideIn .3s ease forwards, rowGlow 2s ease-in-out infinite;
+  border-left:3px solid var(--accent);
+}
+@keyframes rowGlow {
+  0%,100% { box-shadow:inset 0 0 0 transparent; }
+  50% { box-shadow:inset 0 0 20px rgba(255,107,53,.08); }
+}
+
+/* 14. View transitions */
+.view-container { transition:none; }
+.view-slide-out { animation:viewOut .15s ease forwards; }
+.view-slide-in { animation:viewIn .25s ease forwards; }
+@keyframes viewOut { to{opacity:0;transform:translateY(-8px)} }
+@keyframes viewIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+/* 15. Easter egg flip */
+.flip-it { animation:flipScreen 1.5s ease; }
+@keyframes flipScreen { 0%{transform:perspective(800px) rotateX(0)} 50%{transform:perspective(800px) rotateX(180deg)} 100%{transform:perspective(800px) rotateX(360deg)} }
+
+/* 16. Typewriter */
+.typewriter { overflow:hidden; white-space:nowrap; border-right:3px solid var(--accent); width:0; animation:typewrite 1.5s steps(18,end) forwards, blinkCaret .5s step-end infinite; }
+@keyframes typewrite { from{width:0} to{width:100%} }
+@keyframes blinkCaret { 50%{border-color:transparent} }
+
+/* 17. Story splash overlay */
+.story-splash {
+  position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.85);
+  display:flex; align-items:center; justify-content:center; flex-direction:column;
+  cursor:pointer; backdrop-filter:blur(8px);
+  animation:splashIn .5s cubic-bezier(.17,.67,.35,1.2);
+}
+.story-splash img {
+  max-width:85vw; max-height:75vh; border-radius:var(--radius);
+  box-shadow:0 20px 80px rgba(255,107,53,.3), 0 0 0 1px var(--border);
+  animation:splashZoom .5s cubic-bezier(.17,.67,.35,1.2);
+}
+.story-splash-hint {
+  margin-top:20px; font-size:14px; color:var(--text-muted);
+  animation:fadeIn .8s ease .4s both;
+}
+@keyframes splashIn { from{opacity:0} to{opacity:1} }
+@keyframes splashZoom { from{transform:scale(0.3) rotate(-3deg);opacity:0} to{transform:scale(1) rotate(0deg);opacity:1} }
+.story-splash.closing { animation:splashOut .3s ease forwards; }
+.story-splash.closing img { animation:splashZoomOut .3s ease forwards; }
+@keyframes splashOut { to{opacity:0} }
+@keyframes splashZoomOut { to{transform:scale(0.8);opacity:0} }
 </style>
 </head>
 <body>
@@ -1512,7 +1616,22 @@ function launchConfetti() {
 }
 
 // STORY VIEW
+function showStorySplash() {
+  // Don't show again if already dismissed this session
+  if (window._storySplashSeen) return;
+  window._storySplashSeen = true;
+  const splash = document.createElement('div');
+  splash.className = 'story-splash';
+  splash.innerHTML = `<img src="/origin-story.png" alt="The Slack conversation that started it all"><div class="story-splash-hint">click anywhere to continue</div>`;
+  splash.addEventListener('click', () => {
+    splash.classList.add('closing');
+    setTimeout(() => splash.remove(), 300);
+  });
+  document.body.appendChild(splash);
+}
+
 function renderStory() {
+  showStorySplash();
   let html = `<div class="fade-in" style="max-width:700px;margin:0 auto">
     <h1 style="font-size:28px;font-weight:700;letter-spacing:-1px;margin-bottom:24px">How It Started</h1>
     <div style="background:var(--card);border-radius:var(--radius);padding:24px;margin-bottom:24px;line-height:1.8;color:var(--text-secondary);font-size:15px">
@@ -1823,6 +1942,102 @@ dataService.onChange(() => {
   // Update player like button
   if (audioEngine.currentTrack) audioEngine._updateNowPlaying();
 });
+
+// ============================================================
+// INIT
+// ============================================================
+// ============================================================
+// CURSOR SPARKLES
+// ============================================================
+let sparkleThrottle = 0;
+document.addEventListener('mousemove', (e) => {
+  if (Date.now() - sparkleThrottle < 50) return;
+  sparkleThrottle = Date.now();
+  const s = document.createElement('div');
+  s.className = 'sparkle';
+  s.style.left = (e.clientX - 3 + (Math.random()-0.5)*10) + 'px';
+  s.style.top = (e.clientY - 3 + (Math.random()-0.5)*10) + 'px';
+  s.style.background = ['var(--accent)','#ff2e63','#ffb347','#ffd166'][Math.floor(Math.random()*4)];
+  s.style.width = s.style.height = (Math.random()*4+3)+'px';
+  document.body.appendChild(s);
+  setTimeout(() => s.remove(), 600);
+});
+
+// ============================================================
+// RIPPLE EFFECT ON CARDS & BUTTONS
+// ============================================================
+document.addEventListener('click', (e) => {
+  const target = e.target.closest('.track-card, .genre-card, .btn, .nav-item');
+  if (!target) return;
+  const rect = target.getBoundingClientRect();
+  const ripple = document.createElement('div');
+  ripple.className = 'ripple';
+  const size = Math.max(rect.width, rect.height);
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
+  ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
+  target.style.position = target.style.position || 'relative';
+  target.style.overflow = 'hidden';
+  target.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 500);
+});
+
+// ============================================================
+// EASTER EGG - CLICK LOGO 5 TIMES
+// ============================================================
+let logoClicks = 0;
+let logoTimer = null;
+document.querySelector('.sidebar-logo').addEventListener('click', () => {
+  logoClicks++;
+  clearTimeout(logoTimer);
+  logoTimer = setTimeout(() => logoClicks = 0, 2000);
+  if (logoClicks >= 5) {
+    logoClicks = 0;
+    // Go wild
+    launchConfetti();
+    document.body.classList.add('flip-it');
+    setTimeout(() => document.body.classList.remove('flip-it'), 1500);
+    showToast('You found the secret!', 'success');
+  }
+});
+
+// ============================================================
+// VIEW TRANSITIONS
+// ============================================================
+const _origResolve = router.resolve.bind(router);
+router.resolve = function() {
+  const container = document.getElementById('view-container');
+  const hadContent = container.innerHTML.trim().length > 0;
+  if (hadContent) {
+    container.classList.add('view-slide-out');
+    setTimeout(() => {
+      container.classList.remove('view-slide-out');
+      _origResolve();
+      container.classList.add('view-slide-in');
+      setTimeout(() => container.classList.remove('view-slide-in'), 250);
+    }, 150);
+  } else {
+    _origResolve();
+    container.classList.add('view-slide-in');
+    setTimeout(() => container.classList.remove('view-slide-in'), 250);
+  }
+};
+
+// ============================================================
+// TYPEWRITER ON HOME HERO
+// ============================================================
+const _origRenderHome = renderHome;
+renderHome = function() {
+  _origRenderHome();
+  const hero = document.querySelector('.hero-gradient');
+  if (hero && !window._typewriterDone) {
+    window._typewriterDone = true;
+    hero.classList.add('typewriter');
+    hero.style.display = 'inline-block';
+    // Remove caret after animation
+    setTimeout(() => { hero.style.borderRight = 'none'; }, 2000);
+  }
+};
 
 // ============================================================
 // INIT
