@@ -9,16 +9,16 @@
 <script src="/client/quick.js"></script>
 <style>
 :root {
-  --bg: #0a0a0f;
-  --surface: #141420;
-  --card: #1a1a2e;
-  --card-hover: #222240;
-  --accent: #6c5ce7;
-  --accent-hover: #7d6ff0;
-  --text: #f0f0f0;
-  --text-secondary: #8888aa;
-  --text-muted: #555570;
-  --border: #2a2a40;
+  --bg: #0f0a07;
+  --surface: #1a1208;
+  --card: #231a0e;
+  --card-hover: #2e2214;
+  --accent: #ff6b35;
+  --accent-hover: #ff8555;
+  --text: #f5ede6;
+  --text-secondary: #aa9080;
+  --text-muted: #6a5548;
+  --border: #3a2a1a;
   --danger: #e74c3c;
   --success: #2ecc71;
   --warning: #f39c12;
@@ -397,6 +397,68 @@ textarea.form-input { resize:vertical; min-height:80px; }
 .text-accent { color:var(--accent); }
 .fade-in { animation:fadeIn .3s ease; }
 @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* === FUN STUFF === */
+
+/* 1. Equalizer bars for now-playing */
+.eq-bars { display:inline-flex; align-items:flex-end; gap:2px; height:14px; margin-left:6px; }
+.eq-bar { width:3px; background:var(--accent); border-radius:1px; animation:eqBounce 0.8s ease-in-out infinite; }
+.eq-bar:nth-child(1) { animation-delay:0s; height:6px; }
+.eq-bar:nth-child(2) { animation-delay:0.15s; height:10px; }
+.eq-bar:nth-child(3) { animation-delay:0.3s; height:4px; }
+.eq-bar:nth-child(4) { animation-delay:0.45s; height:8px; }
+@keyframes eqBounce { 0%,100%{transform:scaleY(0.3)} 50%{transform:scaleY(1)} }
+
+/* 2. 3D tilt on track cards */
+.track-card { transform-style:preserve-3d; perspective:600px; }
+.track-card:hover { transform:translateY(-2px) rotateX(2deg) rotateY(-2deg); }
+
+/* 3. Animated gradient hero */
+.hero-gradient {
+  background:linear-gradient(-45deg,#ff6b35,#ff2e63,#ffb347,#e84393,#ff6b35);
+  background-size:400% 400%;
+  animation:heroShift 12s ease infinite;
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+@keyframes heroShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+/* 4. Genre cards shimmer on hover */
+.genre-card { position:relative; overflow:hidden; }
+.genre-card::after {
+  content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);
+  transition:none;
+}
+.genre-card:hover::after { left:100%; transition:left .6s ease; }
+.genre-card:hover { transform:translateY(-3px) scale(1.03); filter:brightness(1.15); }
+
+/* 5. Player bar color bleed */
+.player-bar { transition:background .8s ease, box-shadow .8s ease; }
+.player-bar.color-bleed { box-shadow:0 -4px 30px var(--bleed-color, transparent); }
+
+/* 6. Vinyl spin on player art */
+.player-art { transition:border-radius .4s ease; }
+.player-art.spinning {
+  border-radius:50%;
+  animation:vinylSpin 3s linear infinite;
+}
+@keyframes vinylSpin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+/* 7. Bouncing notes loader */
+.notes-loader { display:flex; align-items:center; gap:12px; font-size:24px; }
+.notes-loader span { display:inline-block; animation:noteBounce .6s ease-in-out infinite; }
+.notes-loader span:nth-child(1) { animation-delay:0s; }
+.notes-loader span:nth-child(2) { animation-delay:0.15s; }
+.notes-loader span:nth-child(3) { animation-delay:0.3s; }
+.notes-loader span:nth-child(4) { animation-delay:0.45s; }
+@keyframes noteBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-16px)} }
+
+/* 8. Confetti canvas */
+#confetti-canvas {
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  pointer-events:none; z-index:9999;
+}
 </style>
 </head>
 <body>
@@ -533,6 +595,9 @@ textarea.form-input { resize:vertical; min-height:80px; }
 
 <!-- Modal Container -->
 <div id="modal-container"></div>
+
+<!-- Confetti Canvas -->
+<canvas id="confetti-canvas"></canvas>
 
 <script>
 // ============================================================
@@ -765,8 +830,8 @@ class AudioEngine {
     this.audio.addEventListener('timeupdate', () => this._onTimeUpdate());
     this.audio.addEventListener('ended', () => this._onEnded());
     this.audio.addEventListener('loadedmetadata', () => this._onLoaded());
-    this.audio.addEventListener('play', () => this._updatePlayBtn());
-    this.audio.addEventListener('pause', () => this._updatePlayBtn());
+    this.audio.addEventListener('play', () => { this._updatePlayBtn(); document.getElementById('player-art').classList.add('spinning'); });
+    this.audio.addEventListener('pause', () => { this._updatePlayBtn(); document.getElementById('player-art').classList.remove('spinning'); });
   }
 
   _onTimeUpdate() {
@@ -879,6 +944,12 @@ class AudioEngine {
     likeBtn.classList.toggle('liked', dataService.isLiked(t.id));
     const svg = likeBtn.querySelector('svg');
     svg.setAttribute('fill', dataService.isLiked(t.id) ? 'currentColor' : 'none');
+    // Color bleed from genre
+    const playerBar = document.getElementById('player-bar');
+    const genreColors = { 'hip-hop':'#e74c3c','lo-fi':'#9b59b6','electronic':'#3498db','ambient':'#1abc9c','pop':'#e91e63','rock':'#f44336','jazz':'#ff9800','classical':'#795548','r&b':'#e040fb','country':'#8bc34a','folk':'#a1887f','cinematic':'#607d8b','synthwave':'#6c5ce7','house':'#00bcd4','drum-and-bass':'#ff5722','experimental':'#9c27b0' };
+    const bleedColor = genreColors[t.genre] || '#ff6b35';
+    playerBar.classList.add('color-bleed');
+    playerBar.style.setProperty('--bleed-color', bleedColor + '40');
   }
 
   playTrackFromList(trackId, trackList) {
@@ -949,7 +1020,7 @@ function renderTrackRow(track, idx, list) {
   const liked = dataService.isLiked(track.id);
   return `<div class="track-row ${isPlaying?'playing':''}" onclick="audioEngine.playTrackFromList('${track.id}', currentViewTracks||dataService.tracks)">
     <div><span class="track-row-num">${idx+1}</span><span class="track-row-play-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg></span></div>
-    <div class="track-row-info"><div class="track-row-art">${art}</div><div><div class="track-row-title">${track.title||'Untitled'}</div><div class="track-row-artist">${track.creator?.name||'Unknown'}</div></div></div>
+    <div class="track-row-info"><div class="track-row-art">${art}</div><div><div class="track-row-title">${track.title||'Untitled'}${isPlaying?'<span class="eq-bars"><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span></span>':''}</div><div class="track-row-artist">${track.creator?.name||'Unknown'}</div></div></div>
     <div class="track-row-genre">${track.genre||'—'}</div>
     <div class="track-row-mood">${track.mood||'—'}</div>
     <div class="track-row-duration">${formatDuration(track.duration)}</div>
@@ -968,7 +1039,7 @@ function renderHome() {
   const popular = dataService.getPopular(8);
   let html = '<div class="fade-in">';
   // Hero
-  html += `<div style="margin-bottom:40px"><h1 style="font-size:28px;font-weight:700;letter-spacing:-1px;margin-bottom:8px">Discover AI Music</h1><p style="color:var(--text-secondary);font-size:15px">Browse and stream AI-generated tracks by Shopify creators</p></div>`;
+  html += `<div style="margin-bottom:40px"><h1 class="hero-gradient" style="font-size:36px;font-weight:700;letter-spacing:-1.5px;margin-bottom:8px;display:inline-block">Discover AI Music</h1><p style="color:var(--text-secondary);font-size:15px">Browse and stream AI-generated tracks by Shopify creators</p></div>`;
   // New Arrivals
   if (newArrivals.length) {
     html += `<div class="section"><div class="section-header"><h2 class="section-title">New Arrivals</h2><a class="section-link" href="#/browse">See all →</a></div><div class="track-grid">${newArrivals.map(t => renderTrackCard(t)).join('')}</div></div>`;
@@ -1106,8 +1177,8 @@ async function renderTrackDetail(id) {
   try {
     const { default: WaveSurfer } = await import('https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.esm.js');
     const ws = WaveSurfer.create({
-      container: '#track-waveform', height: 80, waveColor: '#555570',
-      progressColor: '#6c5ce7', cursorColor: '#6c5ce7', barWidth: 2,
+      container: '#track-waveform', height: 80, waveColor: '#6a5548',
+      progressColor: '#ff6b35', cursorColor: '#ff6b35', barWidth: 2,
       barGap: 2, barRadius: 2, url: track.audioUrl,
     });
     ws.on('interaction', (time) => { if (audioEngine.currentTrack?.id === track.id) audioEngine.seek(time / ws.getDuration()); });
@@ -1276,6 +1347,7 @@ async function handleUpload(e) {
     });
 
     showToast('Track uploaded!', 'success');
+    launchConfetti();
     uploadTags = [];
     router.navigate('#/');
   } catch(err) {
@@ -1392,6 +1464,51 @@ function renderSearch(query) {
   }
   html += '</div>';
   vc().innerHTML = html;
+}
+
+// CONFETTI
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const pieces = [];
+  const colors = ['#ff6b35','#ff2e63','#ffb347','#ffd166','#e84393','#ff8555','#fab1a0','#f0b932'];
+  for (let i = 0; i < 120; i++) {
+    pieces.push({
+      x: canvas.width / 2 + (Math.random() - 0.5) * 200,
+      y: canvas.height / 2,
+      vx: (Math.random() - 0.5) * 16,
+      vy: Math.random() * -18 - 4,
+      w: Math.random() * 8 + 4,
+      h: Math.random() * 6 + 2,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rot: Math.random() * 360,
+      rv: (Math.random() - 0.5) * 12,
+      gravity: 0.3 + Math.random() * 0.2
+    });
+  }
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    pieces.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.vy += p.gravity; p.rot += p.rv;
+      p.vx *= 0.99;
+      if (p.y < canvas.height + 50) alive = true;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = Math.max(0, 1 - frame / 90);
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    });
+    frame++;
+    if (alive && frame < 100) requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  draw();
 }
 
 // STORY VIEW
@@ -1653,6 +1770,7 @@ async function doGenerateAIPlaylist() {
 
     closeModal();
     showToast('AI playlist created!', 'success');
+    launchConfetti();
     renderPlaylists();
   } catch(e) {
     statusEl.textContent = 'Error: ' + e.message;
@@ -1710,7 +1828,7 @@ dataService.onChange(() => {
 // INIT
 // ============================================================
 async function init() {
-  vc().innerHTML = '<div class="loading-view"><div class="spinner"></div></div>';
+  vc().innerHTML = '<div class="loading-view"><div class="notes-loader"><span>&#9835;</span><span>&#9833;</span><span>&#9839;</span><span>&#9834;</span></div></div>';
   await initUser();
   await dataService.init();
   renderGenreNav();
