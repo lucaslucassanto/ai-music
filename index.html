@@ -85,7 +85,7 @@ a { color:var(--accent); text-decoration:none; }
 }
 
 /* Sidebar */
-.sidebar-logo { padding:24px 16px 20px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+.sidebar-logo { padding:24px 16px 20px; display:flex; flex-direction:column; align-items:center; gap:8px; position:relative; overflow:visible; }
 .sidebar-logo span { font-size:16px; font-weight:400; font-family:var(--font-display); letter-spacing:0; color:var(--text-on-dark); }
 /* LED dot-matrix smiley */
 .led-smiley {
@@ -102,6 +102,22 @@ a { color:var(--accent); text-decoration:none; }
 }
 .led-smiley:hover .led-dot.on { filter:brightness(1.3); }
 .led-smiley.blink .led-dot.eye { background:#2a1d10!important; box-shadow:none!important; }
+.led-smiley.vibing { animation:headBob .35s ease-in-out infinite; }
+@keyframes headBob {
+  0%,100% { transform:rotate(0deg) translateY(0); }
+  25% { transform:rotate(-6deg) translateY(-2px); }
+  75% { transform:rotate(6deg) translateY(-2px); }
+}
+.music-note-float {
+  position:absolute; font-size:12px; color:var(--accent);
+  pointer-events:none; z-index:11;
+  animation:noteFloat 1.2s ease-out forwards;
+  font-weight:bold;
+}
+@keyframes noteFloat {
+  0% { opacity:1; transform:translateY(0) translateX(0) scale(1) rotate(0deg); }
+  100% { opacity:0; transform:translateY(-40px) translateX(var(--nx,10px)) scale(0.5) rotate(var(--nr,20deg)); }
+}
 .sidebar-nav { padding:0 12px; flex:1; }
 .nav-section { margin-bottom:8px; }
 .nav-section-title {
@@ -1998,20 +2014,19 @@ dataService.onChange(() => {
 function renderLedSmiley() {
   const el = document.getElementById('led-smiley');
   if (!el) return;
-  // 9x9 grid: 1 = on (orange), 0 = off
-  // cute smiley with music note ears
+  // 9x9 grid: headphones-wearing music smiley
   const face = [
-    0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,
-    0,0,1,0,0,0,1,0,0,
-    0,0,1,0,0,0,1,0,0,
-    0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,
-    0,1,0,0,0,0,0,1,0,
     0,0,1,1,1,1,1,0,0,
+    0,1,0,0,0,0,0,1,0,
+    1,1,0,0,0,0,0,1,1,
+    1,1,0,1,0,1,0,1,1,
+    1,1,0,0,0,0,0,1,1,
+    0,0,0,0,0,0,0,0,0,
+    0,0,1,0,0,0,1,0,0,
+    0,0,0,1,1,1,0,0,0,
     0,0,0,0,0,0,0,0,0,
   ];
-  const eyePositions = [20, 24]; // indices of eye dots
+  const eyePositions = [30, 32]; // row3 col3, row3 col5
   el.innerHTML = face.map((v, i) => {
     const isEye = eyePositions.includes(i);
     return `<div class="led-dot ${v ? 'on' : ''} ${isEye ? 'eye' : ''}"></div>`;
@@ -2021,6 +2036,27 @@ function renderLedSmiley() {
     el.classList.add('blink');
     setTimeout(() => el.classList.remove('blink'), 200);
   }, 3000 + Math.random() * 2000);
+  // Vibe to music — bob head fast and emit notes when playing
+  const notes = ['♪','♫','♬','♩','♭','♮'];
+  let wasPlaying = false;
+  setInterval(() => {
+    const playing = typeof audioEngine !== 'undefined' && !audioEngine.audio.paused;
+    if (playing && !wasPlaying) el.classList.add('vibing');
+    if (!playing && wasPlaying) el.classList.remove('vibing');
+    wasPlaying = playing;
+    // Emit a floating music note
+    if (playing && Math.random() > 0.3) {
+      const note = document.createElement('div');
+      note.className = 'music-note-float';
+      note.textContent = notes[Math.floor(Math.random() * notes.length)];
+      note.style.setProperty('--nx', (Math.random() * 40 - 20) + 'px');
+      note.style.setProperty('--nr', (Math.random() * 60 - 30) + 'deg');
+      note.style.left = (20 + Math.random() * 32) + 'px';
+      note.style.top = '-5px';
+      el.parentElement.appendChild(note);
+      setTimeout(() => note.remove(), 1200);
+    }
+  }, 400);
 }
 
 // ============================================================
